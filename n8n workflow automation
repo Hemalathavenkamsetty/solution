@@ -1,0 +1,34 @@
+const express = require('express');
+const { body, validationResult } = require('express-validator');
+const axios = require('axios');
+
+const app = express();
+const port = 3000;
+
+app.use(express.json());
+
+app.post('/submit', [
+  body('name').notEmpty().withMessage('Name is required'),
+  body('email').isEmail().withMessage('Invalid email format'),
+  body('company').notEmpty().withMessage('Company is required'),
+  body('message').notEmpty().withMessage('Message is required')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    // Send data to n8n
+    const n8nResponse = await axios.post('YOUR_N8N_WEBHOOK_URL', req.body);
+    console.log('Data sent to n8n:', n8nResponse.data);
+    res.status(200).json({ message: 'Data successfully submitted and sent to n8n' });
+  } catch (error) {
+    console.error('Error sending data to n8n:', error);
+    res.status(500).json({ message: 'Failed to send data to n8n' });
+  }
+});
+
+app.listen(port, () => {
+  console.log(Server listening on port ${port});
+});
